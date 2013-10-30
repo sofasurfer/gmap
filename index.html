@@ -8,8 +8,7 @@
 		<meta name="description" content="[[*introtext]]" />
 
 		<!-- ADD jQuery from google API source -->
-		<script type="text/javascript" src="https://www.google.com/jsapi?key=ABQIAAAArGC3p9zX-ldt6pS0RPBeNxS7Cqy6TB1sqkW6B7pbZ1ClkON5yBR00TEZUvMzI6G6TFKZQC4RsUPdjA"></script>
-		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 
  		<!-- Include google map lib -->
         <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script> 
@@ -17,9 +16,24 @@
         <!-- Some Happy Styles -->                
         <style type="text/css"> 
             body{width: 100%; margin:0 auto; padding:0px; text-align:center;}        
-            input {font-size: 24px;  margin:0; 
+            input { height: 30px;
+                    font-size: 24px;
                    line-height:25px !important;	
-                   border: solid 1px #494949; }
+                   border: solid 1px #494949; 
+                   margin:0px;
+                   padding: 5px;
+                   vertical-align: middle;
+                  box-sizing: content-box;
+                  -moz-box-sizing: content-box;
+                  -ms-box-sizing: content-box;
+                  -webkit-box-sizing: content-box;
+            }         
+            input[type=button] {
+                border-left:none;
+            }
+            input.error{
+                border:solid 1px red;
+            }
             label { font-size: large; display: block; }
             ul { list-style: none; }
             li { text-align: right; padding-right:1em; padding-bottom: .5em; }
@@ -34,7 +48,7 @@
         <script type="text/javascript"> 
         
             // Root path to data directory
-            var dataRoot = '[[++site_url]]/assets/components/howto/gmap/';
+            var dataRoot = '/';
          
             // data file with markers (could also be a PHP file for dynamic markers)
             var newDate = new Date;				
@@ -73,6 +87,8 @@
              */
             function loadMap(){
         
+                console.log('loadMap');
+
                 // create new map make sure a DIV with id myMap exist on page
                 map = new google.maps.Map(document.getElementById("myMap"), myOptions);
         
@@ -94,7 +110,7 @@
                     
                     // loop all the markers
                     $.each(data.markers, function(i,item){
-        
+                        
                         // add marker to map
                         loadMarker(item);	
         
@@ -179,6 +195,13 @@
          
                 // get new city name
                 var markerAddress = $('#newMarker').val();
+
+                if( markerAddress == "" ){
+                    $('#newMarker').addClass('error');
+                    $('#newMarker').attr('placeholder','missing location');
+                    return false;
+                }
+
          
                 // create new geocoder for dynamic map lookup
                 var geocoder = new google.maps.Geocoder();
@@ -219,6 +242,8 @@
                                 // show marker detail
                                 showMarker(result['id']);
 
+                                $('#newMarker').removeClass('error');
+
                                 // Track Piwik Goal
                                 _paq.push(['trackGoal', 2]);
                             }
@@ -240,7 +265,7 @@
     	    <h1>[[*pagetitle]]</h1>
 
             <!-- Input field for new markers -->
-            <div><input type="text" id="newMarker" /><input type="button" onclick="newMarker();" value="Add Marker" /></div>
+            <div><input type="text" id="newMarker" placeholder="location" /><input type="button" onclick="newMarker();" value="Add Marker" /></div>
 
             <!-- Marker list Placeholder -->
             <ul id="myMapList"></ul>
@@ -251,7 +276,8 @@
         
         <!-- Link to project page -->
         <div class="clear" >
-            written by <a href="http://blog.sofasurfer.org/2011/06/27/dynamic-google-map-markers-via-simple-json-file/">blog.sofasurfer.org</a> download source code <a href="http://storage.sofasurfer.org/download/gmap.tar.gz">gmap.tar.gz</a>
+            written by <a href="http://blog.sofasurfer.org/2011/06/27/dynamic-google-map-markers-via-simple-json-file/">blog.sofasurfer.org</a> 
+            download source code <a href="https://github.com/sofasurfer/gmap">gmap on github</a>
         </div> 
         
         <!-- Piwik -->

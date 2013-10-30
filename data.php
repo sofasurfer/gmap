@@ -1,6 +1,6 @@
 <?php
 /* get markes from file */
-$dataPath = '/var/www/sofaweb/assets/components/howto/gmap/data/';
+$dataPath = 'data/';
 $markerDataFile = 'markers.json';
 $markerText = file_get_contents($markerDataFile);
 
