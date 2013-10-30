@@ -1,7 +1,7 @@
-gmap
+Dynamic Google Map
 ====
 
-Dynamic Google Map 
+Simple example, how to read and create markers via geocoder and jSon file.
 
 
 Please visit: 
