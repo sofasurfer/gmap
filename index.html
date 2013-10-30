@@ -1,0 +1,273 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"> 
+    <head> 
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>[[*longtitle]] | [[++site_name]]</title>
+		<base href="[[++site_url]]" id="site_url" />
+		<meta name="robots" content="index,follow" />
+		<meta name="description" content="[[*introtext]]" />
+
+		<!-- ADD jQuery from google API source -->
+		<script type="text/javascript" src="https://www.google.com/jsapi?key=ABQIAAAArGC3p9zX-ldt6pS0RPBeNxS7Cqy6TB1sqkW6B7pbZ1ClkON5yBR00TEZUvMzI6G6TFKZQC4RsUPdjA"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+
+ 		<!-- Include google map lib -->
+        <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script> 
+
+        <!-- Some Happy Styles -->                
+        <style type="text/css"> 
+            body{width: 100%; margin:0 auto; padding:0px; text-align:center;}        
+            input {font-size: 24px;  margin:0; 
+                   line-height:25px !important;	
+                   border: solid 1px #494949; }
+            label { font-size: large; display: block; }
+            ul { list-style: none; }
+            li { text-align: right; padding-right:1em; padding-bottom: .5em; }
+        
+            #myMap{float:left; width: 650px; height: 400px;margin:auto;margin-top:20px;}
+            #myMapList{float: left; text-align:left; width: 250px;  height:400px; overflow-x:hidden; overflow-y:scroll; }
+            .center { width:1000px; text-align: center;  margin: 0 auto; } 
+            .clear {float: none; clear:both;}
+        </style>
+
+        <!-- The Script Part -->                
+        <script type="text/javascript"> 
+        
+            // Root path to data directory
+            var dataRoot = '[[++site_url]]/assets/components/howto/gmap/';
+         
+            // data file with markers (could also be a PHP file for dynamic markers)
+            var newDate = new Date;				
+            var markerFile = dataRoot + 'markers.json?time=' + newDate.getTime();	
+         
+            // set default map properties
+            var defaultLatlng = new google.maps.LatLng(49.00,10.00);
+            
+            // zoom level of the map		
+            var defaultZoom = 2;
+            
+            // variable for map
+            var map;
+            
+            // variable for marker info window
+            var infowindow;
+         
+            // List with all marker to check if exist
+            var markerList = {};
+         
+            // set error handler for jQuery AJAX requests
+            $.ajaxSetup({"error":function(XMLHttpRequest,textStatus, errorThrown) {   
+                alert(textStatus + ' / ' + errorThrown + ' / ' + XMLHttpRequest.responseText);
+            }});
+        
+            // option for google map object
+            var myOptions = {
+                zoom: defaultZoom,
+                center: defaultLatlng,
+                mapTypeId: google.maps.MapTypeId.HYBRID
+            };
+        
+        
+            /**
+             * Load Map
+             */
+            function loadMap(){
+        
+                // create new map make sure a DIV with id myMap exist on page
+                map = new google.maps.Map(document.getElementById("myMap"), myOptions);
+        
+                // create new info window for marker detail pop-up
+                infowindow = new google.maps.InfoWindow();
+                
+                // load markers
+                loadMarkers();
+            }
+         
+         
+            /**
+             * Load markers via ajax request from server
+             */
+            function loadMarkers(){
+         
+                // load marker jSon data		
+                $.getJSON(markerFile, function(data) {
+                    
+                    // loop all the markers
+                    $.each(data.markers, function(i,item){
+        
+                        // add marker to map
+                        loadMarker(item);	
+        
+                    });
+                });	
+            }
+        
+            /**
+             * Load marker to map
+             */
+            function loadMarker(markerData){
+            
+                // get date
+                var mDate = new Date( markerData['created']*1000 );
+            
+                // create new marker location
+                var myLatlng = new google.maps.LatLng(markerData['lat'],markerData['long']);
+        
+                // create new marker				
+                var marker = new google.maps.Marker({
+                    id: markerData['id'],
+                    map: map, 
+                    title: markerData['creator'] + ' - ' + markerData['name'] ,
+                    position: myLatlng
+                });
+        
+                // add marker to list used later to get content and additional marker information
+                markerList[marker.id] = marker;
+        
+                // add event listener when marker is clicked
+                // currently the marker data contain a dataurl field this can of course be done different
+                google.maps.event.addListener(marker, 'click', function() {
+                    
+                    // show marker when clicked
+                    showMarker(marker.id);
+        
+                });
+        
+                // add event when marker window is closed to reset map location
+                google.maps.event.addListener(infowindow,'closeclick', function() { 
+                    map.setCenter(defaultLatlng);
+                    map.setZoom(defaultZoom);
+                }); 	
+                
+                // add marker to list
+                var listItem = $("<li/>");
+                $("<a/>").attr('href','#').click( function() { 
+                        showMarker( marker.id );
+                        return false;
+                    }).text( markerData['creator'] + ' - ' + markerData['name'] ).appendTo( listItem );
+                $("<label/>").text( mDate.toDateString() ).appendTo(listItem);
+                $('#myMapList').prepend( listItem );                
+            }
+        
+           
+            /**
+             * Show marker info window
+             */
+            function showMarker(markerId){
+                
+                // get marker information from marker list
+                var marker = markerList[markerId];
+                
+                // check if marker was found
+                if( marker ){
+                
+                    // get marker detail information from server
+                    $.get( dataRoot + 'data/' + marker.id + '.html' , function(data) {
+                        // show marker window
+                        infowindow.setContent(data);
+                        infowindow.open(map,marker);
+                    });	
+                }else{
+                    alert('Error marker not found: ' + markerId);
+                }
+            }	
+             
+            /**
+             * Adds new marker to list
+             */
+            function newMarker(){
+         
+                // get new city name
+                var markerAddress = $('#newMarker').val();
+         
+                // create new geocoder for dynamic map lookup
+                var geocoder = new google.maps.Geocoder();
+                geocoder.geocode( { 'address': markerAddress}, function(results, status) {
+                
+                    // check response status
+                    if (status == google.maps.GeocoderStatus.OK) {			
+        
+                        // set new maker id via timestamp
+                        var newDate = new Date;				
+                        var markerId = newDate.getTime();
+                        
+                        // get name of creator
+                        var markerCreator = prompt("Please enter your name","");
+                        
+                        // create new marker data object
+                        var markerData = {
+                            'id': markerId,
+                            'lat': results[0].geometry.location.lat(),
+                            'long': results[0].geometry.location.lng(),
+                            'creator': markerCreator,
+                            'name': markerAddress,
+                        };
+         
+                        // save new marker request to server
+                        $.ajax({
+                            type: 'POST',			
+                            url: dataRoot + "data.php",
+                            data: {
+                                marker: markerData
+                            },
+                            dataType: 'json',
+                            async: false,
+                            success: function(result){
+                                // add marker to map
+                                loadMarker(result);
+                                                        
+                                // show marker detail
+                                showMarker(result['id']);
+
+                                // Track Piwik Goal
+                                _paq.push(['trackGoal', 2]);
+                            }
+                        });
+                        
+                    }else if( status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT){
+                        alert("Marker not found:" + status);
+                    }
+                });
+            }
+        </script> 
+	</head>
+	
+	<!-- the OldSchool way -->	    
+    <body onload="loadMap()"> 
+	    
+	    <div class="center">
+
+    	    <h1>[[*pagetitle]]</h1>
+
+            <!-- Input field for new markers -->
+            <div><input type="text" id="newMarker" /><input type="button" onclick="newMarker();" value="Add Marker" /></div>
+
+            <!-- Marker list Placeholder -->
+            <ul id="myMapList"></ul>
+    
+            <!-- Map Placeholder -->
+            <div id="myMap"></div> 
+        </div>
+        
+        <!-- Link to project page -->
+        <div class="clear" >
+            written by <a href="http://blog.sofasurfer.org/2011/06/27/dynamic-google-map-markers-via-simple-json-file/">blog.sofasurfer.org</a> download source code <a href="http://storage.sofasurfer.org/download/gmap.tar.gz">gmap.tar.gz</a>
+        </div> 
+        
+        <!-- Piwik -->
+        <script type="text/javascript">
+          var _paq = _paq || [];
+          _paq.push(["trackPageView"]);
+          _paq.push(["enableLinkTracking"]);
+
+          (function() {
+            var u=(("https:" == document.location.protocol) ? "https" : "http") + "://piwik.sofasurfer.org//";
+            _paq.push(["setTrackerUrl", u+"piwik.php"]);
+            _paq.push(["setSiteId", "1"]);
+            var d=document, g=d.createElement("script"), s=d.getElementsByTagName("script")[0]; g.type="text/javascript";
+            g.defer=true; g.async=true; g.src=u+"piwik.js"; s.parentNode.insertBefore(g,s);
+          })();
+        </script>
+        <!-- End Piwik Code -->
+    </body>
+</html>
